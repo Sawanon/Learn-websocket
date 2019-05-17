@@ -26,10 +26,37 @@ class Connection implements MessageComponentInterface {
         echo sprintf('Connection %d sending message "%s" to %d other connection%s' . "\n"
                 , $from->resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
 
+
+		//*** Insert data
+		$obj = json_decode($msg);
+
+		$serverName = "localhost";
+		$userName = "root";
+		$userPassword = "88888888";
+		$dbName = "thcreate";
+
+		$conn = mysqli_connect($serverName,$userName,$userPassword,$dbName);
+		$sql = "INSERT INTO mytable (name, email)
+			VALUES ('".$obj->name."','".$obj->email."')";
+		$query = mysqli_query($conn,$sql);
+
+		//*** Get data to json
+		$myArray = array();
+		$sql = "SELECT * FROM mytable ORDER BY id ASC ";
+		$query = mysqli_query($conn,$sql);
+		while($result=mysqli_fetch_array($query,MYSQLI_ASSOC))
+		{
+			$myArray[] = $result;
+		}
+		$json = json_encode($myArray);
+
+		mysqli_close($conn);
+
+
         foreach ($this->clients as $client) {
             if ($from !== $client) {
                 // The sender is not the receiver, send to each client connected
-                $client->send($msg);
+                $client->send($json); //*** send json
             }
         }
     }
